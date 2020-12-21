@@ -34,7 +34,7 @@ client.on('message',async (message) =>{
     .trim()
     .substring(PREFIX.length)
     .split(/\s+/);
-    console.log(CMD_NAME);
+    // console.log(CMD_NAME);
     var tags = args;
     const authorId = message.author.id;
     const authorName = message.author.username;
@@ -141,8 +141,17 @@ client.on('message',async (message) =>{
       
        if(message.reference !== null){
          var imgUrl = ''; 
+        
         await message.channel.messages.fetch(message.reference.messageID)
         .then(msg => {
+          if(msg.author.id !== "775401166230126593"){
+            
+          message.reply("This command can be used only as a reply to the Exam Buddy bot")
+          return
+          }
+          if(msg.embeds[0] === undefined ){
+            message.reply("No attacment found in the message")
+          }
           imgUrl = msg.embeds[0].url;
         })
         .catch(console.error);
@@ -153,11 +162,11 @@ client.on('message',async (message) =>{
             for(let i = 0; i<tags.length; ++i){
               newTags.push(tags[i]);
             }
-            console.log(newTags);
+            // console.log(newTags);
             Pic.findOneAndUpdate({url:imgUrl},{tags:newTags})
             .then(doc =>{
-              message.channel.send("The tags were added");
-              console.log(doc);
+              message.reply("The tags were added");
+            // console.log(doc);
             })
             .catch(e =>console.log(e))
            });  
@@ -183,7 +192,7 @@ client.on('message',async (message) =>{
       });
     }else if(message.attachments && CMD_NAME === 'read'){
       var url = message.attachments.array()[0].url;
-      console.log(url);
+      // console.log(url);
       var apiUrl = 'https://api.ocr.space/parse/imageurl?apikey=c44024397388957&url=' + url;
       await axios.get(apiUrl)
       .then(async(response) =>{
