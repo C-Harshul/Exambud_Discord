@@ -144,20 +144,29 @@ client.on('message',async (message) =>{
         
         await message.channel.messages.fetch(message.reference.messageID)
         .then(msg => {
+          
+          //console.log(msg);
           if(msg.author.id !== "775401166230126593"){
+            if(msg.attachments.array()[0].url !== undefined){ 
+            imgUrl = msg.attachments.array()[0].url;
+            }
+            else
+            message.reply("No attachment found in the message");  
+          }
+          else {
+            if(msg.embeds[0] === undefined ){
+              message.reply("No attachment found in the message")
+            }
             
-          message.reply("This command can be used only as a reply to the Exam Buddy bot")
-          return
+            imgUrl = msg.embeds[0].url;
           }
-          if(msg.embeds[0] === undefined ){
-            message.reply("No attacment found in the message")
-          }
-          imgUrl = msg.embeds[0].url;
+          
         })
         .catch(console.error);
-          
+      
         await Pic.find({url:imgUrl})
          .then(docs =>{
+          
             var newTags = docs[0].tags;
             for(let i = 0; i<tags.length; ++i){
               newTags.push(tags[i]);
