@@ -2,23 +2,12 @@ require('dotenv').config();
 
 const { Client } = require('discord.js');
 const google = require('google');
-const mongoose = require('mongoose');
 
-const axios = require('axios');
-const Pic = require('./models/pic');
-const User = require('./models/user');
+const pic = require('./functions/pic_func')
 
 const client = new Client({
     partials: ['MESSAGE','REACTION']
 });
-
-
-mongoose.connect('mongodb+srv://harshul:harshul@cluster0.dbkis.mongodb.net/DeskAssign?retryWrites=true&w=majority',
- {
-   useUnifiedTopology: true,
-   useNewUrlParser: true
- }
-);
 
 const PREFIX = "$";
 
@@ -58,36 +47,18 @@ client.on('message',async (message) =>{
         return
       }
       const url = message.attachments.array()[0].url;
-      const newPic = new Pic({
-          _id : new mongoose.Types.ObjectId(),
-          author:message.author.username,
-          url:url,
-          tags:tags
-      });
-      
-      await User.find({_id:authorId})
-      .exec()
-      .then(doc =>{
-          if(doc.length == 0){
-                let newUser = new User({
-                _id : authorId,
-                name: authorName,
-            })
-            newUser.save()
-            .then(res =>{
-              console.log(res);
-              message.reply('Welcome to the club 🎉🎉') 
-            });
-           }
-      }).catch(err =>{console.log(err)});
-      newPic.save()
-      .then(res =>{
-          console.log(res);
-          message.reply('I will remember that 😉');
-        }).catch(err =>{console.log(err)});
+     await pic.add (authorName,url,tags,authorId)
+     .then(user =>{
+       console.log(user);
+       if(user === "new")
+       message.reply('Welcome to the club')
+       message.reply('I will remember that 😉')
+     }).catch(err => {
+       console.log(err)
+       message.reply("Some problem occured while adding to the database")
+      })
+
     }
-
-
 
 
     else if(CMD_NAME === 'addQuote'){
@@ -99,43 +70,30 @@ client.on('message',async (message) =>{
 
     else if(CMD_NAME === 'getPic'){
       //Get the pic of someone - based on tag 
-      await User.find({_id:authorId})
-      .exec()
-      .then(doc =>{
-          if(doc.length == 0){
-                let newUser = new User({
-                _id : authorId,
-                name: authorName,
-            })
-            newUser.save()
-            .then(res =>{
-              console.log(res);
-              message.reply('Welcome to the club 🎉🎉') 
-            });
-           }
-      }).catch(err=>{console.log(err)});
-       await Pic.find({ tags: { $all: tags } } )
-       .exec()
-       .then(docs => {
-         
-         let files = [];
-         for(let i = 0;i<docs.length;++i){
-            if( i == 0 )
-             message.channel.send('Here are the matching tags...'); 
-             files.push(docs[i].url);
-             console.log(docs[i].tags);
-             var tags = '';
-             for(let j in docs[i].tags){
-                 tags += docs[i].tags[j] + "  ,  ";
-             }
-             message.channel.send(tags+"\n"+docs[i].url);
-         }
-         console.log(files);
-         if(files.length === 0){
-             message.reply(' provided tags not found 😐');
-         }        
-        
-       });
+      await pic.get(authorId,authorName,tags)
+      .then(Docs =>{
+        console.log(Docs)
+        let docs = Docs["docs"]   
+        let files = [];
+        for(let i = 0;i<docs.length;++i){
+           if( i == 0 )
+            message.channel.send('Here are the matching tags...'); 
+            files.push(docs[i].url);
+            console.log(docs[i].tags);
+            var tags = '';
+            for(let j in docs[i].tags){
+                tags += docs[i].tags[j] + "  ,  ";
+            }
+            message.channel.send(tags+"\n"+docs[i].url);
+        }
+        console.log(files);
+        if(files.length === 0){
+            message.reply(' provided tags not found 😐');
+        } 
+      }).catch(err => {
+        console.log(err)
+        message.reply("Some problem occured while retrieving the pics")
+       })
     }
     else if(CMD_NAME === 'addTags'){
       
@@ -163,54 +121,50 @@ client.on('message',async (message) =>{
           
         })
         .catch(console.error);
-      
-        await Pic.find({url:imgUrl})
-         .then(docs =>{
-          
-            var newTags = docs[0].tags;
-            for(let i = 0; i<tags.length; ++i){
-              newTags.push(tags[i]);
-            }
-            // console.log(newTags);
-            Pic.findOneAndUpdate({url:imgUrl},{tags:newTags})
-            .then(doc =>{
-              message.reply("The tags were added");
-            // console.log(doc);
-            })
-            .catch(e =>console.log(e))
-           });  
-         }
+        pic.addTags(imgUrl,tags)
+        .then(s =>{
+          if(s === 1)
+          message.reply("The tags were added")
+        }).catch(e =>{
+          message.send("Some problem occured while adding the tags")
+        })
+      }
        else{
          message.reply('This command can be used only as a reply')
        } 
     }
     else if(message.attachments && CMD_NAME === 'search'){
       var url = message.attachments.array()[0].url;
-    
-      var apiUrl = 'https://api.ocr.space/parse/imageurl?apikey=c44024397388957&url=' + url;
-      var text = '';
-      await axios.get(apiUrl)
-      .then(async(response) =>{
-        text = response.data['ParsedResults'][0]['ParsedText'];
-      });
-  
-     await google(text, (err, res) => {
+      var recognisedText = ''
+      await pic.getText(url)
+      .then(text =>{
+        recognisedText = text
+      }).catch(err =>{
+        console.log(err)
+        message.reply("Could not recognise the text");
+      }); 
+     
+     await google(recognisedText, (err, res) => {
+       
         if (err) console.error(err);
-        text = text + '\n Search .....\n' + res.url; 
-        message.channel.send(text);
+        recognisedText = recognisedText + '\n Search .....\n' + res.url; 
+        message.channel.send(recognisedText);
       });
-    }else if(message.attachments && CMD_NAME === 'read'){
+    }
+    
+    else if(message.attachments && CMD_NAME === 'read'){
       var url = message.attachments.array()[0].url;
-      // console.log(url);
-      var apiUrl = 'https://api.ocr.space/parse/imageurl?apikey=c44024397388957&url=' + url;
-      await axios.get(apiUrl)
-      .then(async(response) =>{
-        text = response.data['ParsedResults'][0]['ParsedText'];
+      //console.log(message.attachments.array()[0].url)
+      var recognisedText = ""
+      message.channel.send("Please Wait...")
+      await pic.getText(url)
+      .then(text =>{
+        recognisedText = text
       })
       .catch((err) =>{
         console.log(err);
       });
-      message.channel.send(text);
+      message.channel.send(recognisedText);
     }
     else {
       message.channel.send("** Invalid command check the following **\n1.Use ```$addPic <tag1> <tag2>...``` to add the picture to the database \n 2. Use ```$getPic <tag1> <tag2>...``` to get the matching pics from the database \n 3. Use ```$addTags <tag1> <tag2>...``` as a reply to a pic shared by the bot to add tags \n 4.```$search``` and upload pic to get the search link \n 5. ```$read``` and upload pic to just read the text")
