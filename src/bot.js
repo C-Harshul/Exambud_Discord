@@ -143,13 +143,13 @@ client.on('message',async (message) =>{
         console.log(err)
         message.reply("Could not recognise the text");
       }); 
-     
-     await google(recognisedText, (err, res) => {
-       
+      message.channel.send("Please Wait...")
+      await google(recognisedText, (err, res) => {
         if (err) console.error(err);
         recognisedText = recognisedText + '\n Search .....\n' + res.url; 
         message.channel.send(recognisedText);
       });
+     
     }
     
     else if(message.attachments && CMD_NAME === 'read'){
