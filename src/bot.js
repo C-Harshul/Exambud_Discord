@@ -4,10 +4,14 @@ const { Client } = require('discord.js');
 const google = require('google');
 
 const pic = require('./functions/pic_func')
+const group = require('./functions/group_func')
+const messageDecode = require('./functions/message_nlp')
 
 const client = new Client({
     partials: ['MESSAGE','REACTION']
 });
+
+
 
 const PREFIX = "$";
 
@@ -16,10 +20,22 @@ client.on('ready',() =>{
 });
 
 client.on('message',async (message) =>{
+
+ 
   if(message.author.bot) return;
   
-  if(message.content.startsWith(PREFIX)){
-    const [CMD_NAME,...args] = message.content
+  let decodedMessage = ""
+  if(message.content.startsWith('$')) {
+    decodedMessage = message.co
+  }
+  else {
+  
+  decodedMessage = messageDecode(message.content)
+  console.log(decodedMessage)
+  } 
+
+  if(decodedMessage.startsWith(PREFIX)){
+    const [CMD_NAME,...args] = decodedMessage
     .trim()
     .substring(PREFIX.length)
     .split(/\s+/);
@@ -35,6 +51,12 @@ client.on('message',async (message) =>{
       message.channel.send(" 1.Use ```$addPic <tag1> <tag2>...``` to add the picture to the database \n 2. Use ```$getPic <tag1> <tag2>...``` to get the matching pics from the database \n 3. Use ```$addTags <tag1> <tag2>...``` as a reply to a pic shared by the bot to add tags \n 4.```$search``` and upload pic to get the search link \n 5. ```$read``` and upload pic to just read the text")
        
     }
+
+    if(CMD_NAME === 'invalid'){
+       
+      message.channel.send("Didnt understand that...")
+    }
+
 
     else if(CMD_NAME === 'addPic'){
       //Add the pic to the database
@@ -134,6 +156,10 @@ client.on('message',async (message) =>{
        } 
     }
     else if(message.attachments && CMD_NAME === 'search'){
+      if(message.attachments.array()[0] === undefined){
+        message.reply('Attach an image buddy 😪');
+        return;
+    }
       var url = message.attachments.array()[0].url;
       var recognisedText = ''
       await pic.getText(url)
@@ -153,8 +179,13 @@ client.on('message',async (message) =>{
     }
     
     else if(message.attachments && CMD_NAME === 'read'){
-      var url = message.attachments.array()[0].url;
+      
       //console.log(message.attachments.array()[0].url)
+      if(message.attachments.array()[0] === undefined){
+        message.reply('Attach an image buddy 😪');
+        return;
+    }
+    var url = message.attachments.array()[0].url;
       var recognisedText = ""
       message.channel.send("Please Wait...")
       await pic.getText(url)
@@ -166,11 +197,14 @@ client.on('message',async (message) =>{
       });
       message.channel.send(recognisedText);
     }
-    else {
-      message.channel.send("** Invalid command check the following **\n1.Use ```$addPic <tag1> <tag2>...``` to add the picture to the database \n 2. Use ```$getPic <tag1> <tag2>...``` to get the matching pics from the database \n 3. Use ```$addTags <tag1> <tag2>...``` as a reply to a pic shared by the bot to add tags \n 4.```$search``` and upload pic to get the search link \n 5. ```$read``` and upload pic to just read the text")
-    } 
+    
   } 
 
+  else if(message.attachments && CMD_NAME === 'create') {
+    const groupName = tags[0]
+    const adminPassword = tags[1]
+     
+  } 
 
 });
 

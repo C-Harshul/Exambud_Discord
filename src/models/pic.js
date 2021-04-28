@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
 
-const Pic = mongoose.Schema({
+const picSchema = mongoose.Schema({
  
-    _id:mongoose.Schema.Types.ObjectId,
     author:String,
     url:String,
+    groups : [{
+        group : {
+            type : mongoose.Schema.Types.ObjectId
+        }
+    }],
     tags:mongoose.Schema.Types.Mixed
      
 });
 
-module.exports = mongoose.model('Pic',Pic);
+module.exports = mongoose.model('Pic',picSchema);
