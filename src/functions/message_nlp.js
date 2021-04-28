@@ -1,12 +1,12 @@
 keywords = ["help","get","give","add","search","read","want","need"]
-pic = ["pics","pictures","images","notes","image"]
+pic = ["pics","pictures","images","notes","image","picture"]
 tag = ["tags","tag"]
-ignore = ["the","following","with","exam_bot","them","for","me","my","exam","internals","quiz","coming","tomorrow","today","commands","now","you","can"," ","please","and","these","this",'',"database","data","in","to","above","of","from","I","i"]
+ignore = ["the","following","with","exam_bot","them","for","me","my","exam","internals","quiz","coming","tomorrow","today","commands","now","you","can"," ","please","and","these","this",'',"database","data","in","to","above","of","from","I","i","gonna","fail","plsss"]
 
 function nlp_meassage(st){
     message = "$"
     keyword = ""
-    tags_or_pics = 1
+    picture = 0
     number_keywords = 0
     tags = []
     st = st.toLowerCase()
@@ -17,9 +17,10 @@ function nlp_meassage(st){
             keyword = value
             number_keywords = number_keywords+1
         }else if(pic.includes(value)){
-            tags_or_pics = tags_or_pics + 1
+            tags_or_pics = 1
+            picture = 1
         }else if(tag.includes(value)){
-            tags_or_pics = tags_or_pics + Math.pow(2,tags_or_pics)
+            tags_or_pics = 0
         }else if(ignore.includes(value)){
             keyword = keyword
         }else{
@@ -28,19 +29,19 @@ function nlp_meassage(st){
     });
     
     if(number_keywords != 1){
-        return "$help"
+        return "invalid"
     }
     if(keyword == "help" || keyword == "read" || keyword == "search"){
         return "$"+keyword
     }
     if(keyword == "add"){
-        if(tags_or_pics == 3 || tags_or_pics== 4){
+        if(tags_or_pics ==  0 && picture == 0){
             message = "$addTags"
             tags.forEach(function(v){
                 message = message+" "+v
         })
             return message
-        }else if(tags_or_pics == 2 || tags_or_pics == 6){
+        }else if(tags_or_pics == 1 || picture == 1){
             message = "$addPic"
             tags.forEach(function(v){
                 message = message+" "+v
