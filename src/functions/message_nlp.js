@@ -29,7 +29,7 @@ function nlp_meassage(st){
     });
     
     if(number_keywords != 1){
-        return "invalid"
+        return "$invalid"
     }
     if(keyword == "help" || keyword == "read" || keyword == "search"){
         return "$"+keyword

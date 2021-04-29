@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const { Client } = require('discord.js');
+const { Client,MessageCollector } = require('discord.js');
 const google = require('google');
 
 const pic = require('./functions/pic_func')
@@ -11,7 +11,7 @@ const client = new Client({
     partials: ['MESSAGE','REACTION']
 });
 
-
+let gameOn = false;
 
 const PREFIX = "$";
 
@@ -21,12 +21,13 @@ client.on('ready',() =>{
 
 client.on('message',async (message) =>{
 
- 
+//  console.log(messag.author)
   if(message.author.bot) return;
-  
+  else if(gameOn === true) return;
   let decodedMessage = ""
+  console.log(message.content)
   if(message.content.startsWith('$')) {
-    decodedMessage = message.co
+    decodedMessage = message.content
   }
   else {
   
@@ -44,7 +45,7 @@ client.on('message',async (message) =>{
     const authorId = message.author.id;
     const authorName = message.author.username;
   
-  
+    console.log(CMD_NAME)
 
     if(CMD_NAME === 'help'){
        
@@ -82,12 +83,177 @@ client.on('message',async (message) =>{
 
     }
 
-
     else if(CMD_NAME === 'addQuote'){
       //Add the quote to the database  
     }
 
+    else if(CMD_NAME === 'game') {
+      gameOn = true
 
+      let board = [' ',' ',' ',' ',' ',' ',' ',' ',' ']
+let gameOver = false 
+
+const printBoard = () => {
+  message.channel.send('|                |                |                 |\n|        '+board[0]+'       |        '+board[1]+'       |        '+board[2]+'        |\n|                |                |                 |\n|----------|----------|----------|\n|                |                |                 |\n|        '+board[3]+'       |        '+board[4]+'       |        '+board[5]+'        |\n|                |                |                 |\n|----------|----------|----------|\n|                |                |                 |\n|        '+board[6]+'       |        '+board[7]+'       |        '+board[8]+'        |\n|                |                |                 |\n')
+}
+
+const checkWin = (square) => {
+     
+  let val = 2;
+
+    if (square[0] == square[1]  && square[1] == square[2] && square[0] == 'o')
+        val = 1
+    else if (square[3] == square[4] && square[4] == square[5] && square[3] == 'o')
+        val =  1;
+    else if (square[6] == square[7] && square[7] == square[8] && square[6] == 'o')
+        val= 1;
+    else if (square[0] == square[3] && square[3] == square[6] && square[0] == 'o')
+        val= 1;
+    else if (square[1] == square[4] && square[4] == square[7] && square[1] == 'o')
+        val= 1;
+    else if (square[2] == square[5] && square[5] == square[8] && square[2] == 'o')
+        val= 1;
+    else if (square[0] == square[4] && square[4] == square[8] && square[0] == 'o')
+        val= 1;
+    else if (square[2] == square[4] && square[4] == square[6] && square[2] == 'o')
+        val= 1;
+    else if (square[0] == square[1] && square[1] == square[2] && square[0] == 'x')
+        val = -1
+    else if (square[3] == square[4] && square[4] == square[5] && square[3] == 'x')
+        val =  -1;
+    else if (square[6] == square[7] && square[7] == square[8] && square[6] == 'x')
+        val= -1;
+    else if (square[0] == square[3] && square[3] == square[6] && square[0] == 'x')
+        val= -1;
+    else if (square[1] == square[4] && square[4] == square[7] && square[1] == 'x')
+        val= -1;
+    else if (square[2] == square[5] && square[5] == square[8] && square[2] == 'x')
+        val= -1;
+    else if (square[0] == square[4] && square[4] == square[8] && square[0] == 'x')
+        val= -1;
+    else if (square[2] == square[4] && square[4] == square[6] && square[2] == 'x')
+        val= -1;
+    else if(!square.includes(' '))
+        val = 0; 
+
+    
+    return val
+
+
+}
+
+
+const playerMove = async () => {
+
+    const filter = m => m.author.id === message.author.id
+    message.reply('Choose the location')
+    
+    try {
+      await message.channel.awaitMessages(filter, {max: 1,time: 20000}).then(async(messages) => {
+        
+    let location = parseInt(messages.first().content) 
+    if(board[location] == ' '){
+ 
+    board[location] = 'x'
+ 
+ 
+    if(checkWin(board) == 1){
+       console.log('**************YOU WON!!!!!!*************\n\n')
+       printBoard(board)
+       gameOver = true
+    }
+   }
+   else {
+       message.channel.send('The position is already taken')
+       await playerMove()
+   } 
+   
+  }).catch(err => {
+    console.log(err)
+  })
+    } catch(e) {
+      console.log(e)
+    } 
+   
+}
+
+const bestMove = () => {
+ 
+  let bestScore = -Infinity
+  let bestMove 
+  for(let i = 0 ; i<9;++i) {
+      if(board[i] ==  ' '){
+          board[i] = 'o'
+          let score = minimax(board,0,false)
+          board[i] = ' ' 
+          if(score > bestScore) {
+              bestScore  = score
+              bestMove = i
+              console.log(bestMove)
+          }
+          
+      }
+
+  } board[bestMove] = 'o'
+}
+
+const minimax = (board,depth,isMax) => {
+
+  let result = checkWin(board)
+  if(result !== 2) {
+      return result
+  }
+
+  if(isMax) {
+      let bestScore = -Infinity
+      for(let i = 0;i<9;++i) {
+         if(board[i] == ' '){
+             board[i] = 'o'
+             let score = minimax(board,depth+1,false)
+             board[i] = ' '
+             bestScore = Math.max(score,bestScore)
+         }
+      } return bestScore;
+  } else {
+      let bestScore = Infinity
+      for(let i = 0;i<9;++i) {
+         if(board[i] == ' '){
+             board[i] = 'x'
+             let score = minimax(board,depth+1,true)
+             board[i] = ' '
+             bestScore = Math.min(score,bestScore)
+         }
+      } return bestScore; 
+  }
+} 
+
+
+      while(!gameOver){
+        bestMove(); 
+        if(checkWin(board,'o') == 1){
+    
+        message.channel.send('COMP WON!!')
+        printBoard(board)
+        gameOver = true
+        gameOn = false
+        break;
+        
+        } 
+         printBoard(board)
+        if(checkWin(board) == 0){
+          message.channel.send('Its a draw. You cant win anyways')
+            gameOver = true
+            gameOn = false
+            break;
+            
+        }        
+        await playerMove()    
+         
+     }
+     if(gameOver)
+      console.log(gameOver)
+
+ }
 
 
     else if(CMD_NAME === 'getPic'){
@@ -200,13 +366,13 @@ client.on('message',async (message) =>{
     
   } 
 
-  else if(message.attachments && CMD_NAME === 'create') {
-    const groupName = tags[0]
-    const adminPassword = tags[1]
+  else if( CMD_NAME === 'invalid') {
+    message.reply('I did not understand that')
      
   } 
 
 });
+
 
 
 client.login(process.env.DISCORD_BOT_TOKEN);

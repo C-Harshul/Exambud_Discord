@@ -107,6 +107,8 @@ async function getText (url){
   return text
 }
 
+
+
 exports.add = addPic
 exports.get = getPic
 exports.getText = getText
