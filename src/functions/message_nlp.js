@@ -1,8 +1,14 @@
-keywords = ["help", "get", "give", "add", "search", "read", "want", "need"];
+keywords = ["help", "get", "give", "add", "search","google", "read", "want", "need", "play","tictactoe","game","bored"];
 pic = ["pics", "pictures", "images", "notes", "image", "picture"];
 tag = ["tags", "tag"];
 ignore = [
   "the",
+  `I'm`,
+  "im",
+  "Im",
+  "want",
+  "quick",
+  "to",
   "following",
   "with",
   "exam_bot",
@@ -40,7 +46,7 @@ ignore = [
   "plsss",
 ];
 
-function nlp_meassage(st) {
+function nlp_message(st) {
   message = "$";
   keyword = "";
   picture = 0;
@@ -65,7 +71,9 @@ function nlp_meassage(st) {
     }
   });
 
-  if (number_keywords != 1) {
+  console.log(keyword)
+
+  if (number_keywords == 0) {
     return "$invalid";
   }
   if (keyword == "help" || keyword == "read" || keyword == "search") {
@@ -95,5 +103,8 @@ function nlp_meassage(st) {
     });
     return message;
   }
+  if(keyword == "play" || keyword == "tictactoe" || "bored"){
+      return "$game"
+  }
 }
-module.exports = nlp_meassage;
+module.exports = nlp_message;
